@@ -20,29 +20,43 @@ class RSA:
 		self.d = mod_inverse(self.e,self.phi)
 		self.private = [self.d,self.N]
 		
-	def encrypt(self,msg,t=False):
-		if t:
+	def encrypt(self,msg):
+		try:
+			return pow(msg,self.e, self.N)
+		except TypeError:
 			return self.encryptText(msg)
-		return pow(msg,self.e, self.N)
+		except:
+			print("THERE WAS AN ERROR!")
 	
 	def decrypt(self, msg,d= 0, N= 0):
 		if not d and not N:
 			d = self.d
 			N = self.N
-		return pow(msg,d,N)
-		
-
-	def encryptText(self ,msg):	
-		return "-".join(list(map(lambda x :"".join(list(map(lambda y: str(self.encrypt(ord(y)))+"/",x))),list(map(lambda x: list(x),str(msg).split())))))
-		
-	def decryptText(self,msg,d=0,N=0):
-		if not d and not N:
+		try:
+			return pow(msg,self.d, self.N)
+		except TypeError:
+			return self.decryptText(msg)
+		except:
+			print("THERE WAS AN ERROR!)	
+	
+	def signature(self, msg,d=0,N=0):
+		if not d or not N:
 			d = self.d
 			N = self.N
+		import hashlib
+			
+		try:
+			return str(pow(int(hashlib.sha256(msg.encode()).hexdigest(),16),d,N))
+			
+		except: 
+			return pow(int(hashlib.sha256(msg.encode()).hexdigest(),16),d,N)
 		
-		fun = lambda y: 0 if y == '' else int(y)
 		
-		return " ".join(list(map(lambda x: "".join(x),list(map(lambda x: list(map(lambda y: chr(y),x)),list(map(lambda x: x[:-1],list(map(lambda x: list(map(lambda y: self.decrypt(fun(y),d,N),x)),list(map(lambda x: list(map(lambda y: y.replace("/",""),x)), list(map(lambda x: x.split("/"),msg.split("-"))))))))))))))
-		
-		
-		
+	def verify(self,msg,sig,N=0, e=65537):
+		if not e and not N:
+			e = self.e
+			N = self.N
+			
+		import hashlib
+			
+		return pow(int(sig),e,N) == int(hashlib.sha256(msg.encode()).hexdigest(),16)
